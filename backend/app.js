@@ -55,6 +55,6 @@ io.on("connection", (socket) => {
     });
 });
 
-app.get("/", (req, res) => res.send("Hello Satyam"));
+app.get("/", (req, res) => res.send("Hello there user"));
 
 server.listen(port, () => console.log(`server started at port : ${port}`));
