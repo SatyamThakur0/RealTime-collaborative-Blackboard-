@@ -1,0 +1,141 @@
+import { useEffect } from "react";
+import * as fabric from "fabric";
+import { getObjByID } from "./FabricEventHandler";
+
+function SocketEventHandler({ socket, canvas, color }) {
+    useEffect(() => {
+        if (socket && canvas) {
+            socket.on("receivedFreePath", (path) => {
+                let fabricObject = new fabric.Path(path.path, {
+                    stroke: path.stroke,
+                    top: path.top,
+                    left: path.left,
+                    fill: "transparent",
+                    id: path.id,
+                });
+                canvas.add(fabricObject);
+                canvas.renderAll();
+                console.log(path);
+            });
+            socket.on("clearedShapes", (shapes) => {
+                let objs = shapes;
+                let arr = [];
+                objs.forEach((element) => {
+                    arr.push(element.id);
+                });
+                arr.forEach((element) => {
+                    canvas.remove(getObjByID(canvas, element));
+                });
+                canvas.discardActiveObject();
+                canvas.renderAll();
+            });
+
+            socket.on("receiveText", (obj) => {
+                let textObj = getObjByID(canvas, obj.id);
+                if (textObj) {
+                    textObj?.set({ text: obj.text });
+                    textObj?.setCoords();
+                }
+                canvas.renderAll();
+            });
+            socket.on("movedShape", (objs) => {
+                console.log(objs);
+                objs.forEach((el) => {
+                    let obj = getObjByID(canvas, el.id);
+                    obj?.set({ top: el.top, left: el.left });
+                    obj?.setCoords();
+                });
+                canvas.renderAll();
+            });
+
+            socket.on("scaledShape", (obj) => {
+                let scaledShape = getObjByID(canvas, obj.id);
+                if (scaledShape) {
+                    scaledShape?.set({
+                        scaleX: obj.scaleX,
+                        scaleY: obj.scaleY,
+                    });
+                    scaledShape?.setCoords();
+                }
+                canvas.renderAll();
+            });
+            socket.on("rotatedShape", (obj) => {
+                let rotatedShape = getObjByID(canvas, obj.id);
+                if (rotatedShape) {
+                    rotatedShape?.set({
+                        angle: obj.angle,
+                        top: obj.top,
+                        left: obj.left,
+                    });
+                    rotatedShape?.setCoords();
+                }
+                canvas.renderAll();
+            });
+
+            socket.on("receivedShape", (shape) => {
+                let fabricObject;
+                if (shape.type === "Rect") {
+                    fabricObject = new fabric.Rect({
+                        left: shape.left,
+                        top: shape.top,
+                        width: shape.width,
+                        stroke: shape.stroke,
+                        strokeWidth: 2,
+                        height: shape.height,
+                        fill: shape.fill,
+                        id: shape.id,
+                    });
+                } else if (shape.type === "Circle") {
+                    fabricObject = new fabric.Circle({
+                        left: shape.left,
+                        top: shape.top,
+                        stroke: shape.stroke,
+                        strokeWidth: 2,
+                        radius: shape.radius,
+                        fill: shape.fill,
+                        id: shape.id,
+                    });
+                } else if (shape.type === "Line") {
+                    fabricObject = new fabric.Line([50, 100, 200, 100], {
+                        stroke: shape.stroke,
+                        id: shape.id,
+                    });
+                } else if (shape.type === "Path") {
+                    fabricObject = new fabric.Path(
+                        "M 0 0 L 200 0 L 190 -10 M 200 0 L 190 10",
+                        {
+                            stroke: shape.stroke,
+                            top: 100,
+                            left: 100,
+                            fill: "transparent",
+                            id: shape.id,
+                        }
+                    );
+                } else if (shape.type === "IText") {
+                    fabricObject = new fabric.IText("Type here", {
+                        left: 100,
+                        top: 100,
+                        fill: shape.fill,
+                        id: shape.id,
+                    });
+                }
+
+                fabricObject.toObject = (function (toObject) {
+                    return function () {
+                        const obj = toObject.call(this);
+                        obj.id = this.id;
+                        return obj;
+                    };
+                })(fabricObject.toObject);
+                // console.log(fabricObject);
+
+                if (fabricObject && canvas) {
+                    canvas.add(fabricObject);
+                    canvas.renderAll();
+                }
+            });
+        }
+    }, [socket, color]);
+}
+
+export default SocketEventHandler;
