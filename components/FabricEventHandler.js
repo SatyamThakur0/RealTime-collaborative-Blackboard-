@@ -17,32 +17,40 @@ export const updateCanvas = (e, canvas, socket) => {
 };
 
 export const movedCanvas = (e, canvas, socket) => {
-    let targetObjs = canvas.getActiveObjects();
-    if (socket) {
-        socket.emit("moved", targetObjs);
-    }
+    let targetObjs = [];
+    canvas.getActiveObjects().map((obj) => {
+        targetObjs.push({ id: obj.id, top: obj.top, left: obj.left });
+    });
+    if (socket) socket.emit("moved", targetObjs);
 };
 export const rotateCanvas = (e, canvas, socket) => {
-    let targetObj = e.target;
-    if (socket) {
-        socket.emit("rotated", targetObj.toJSON());
-    }
+    let targetObjs = [];
+    canvas.getActiveObjects().map((obj) => {
+        targetObjs.push({
+            id: obj.id,
+            angle: obj.angle,
+            top: obj.top,
+            left: obj.left,
+        });
+    });
+    if (socket) socket.emit("rotated", targetObjs);
 };
 export const scaledCanvas = (e, canvas, socket) => {
-    let targetObj = e.target;
-    if (socket) {
-        socket.emit("scaled", targetObj.toJSON());
-    }
+    let targetObjs = [];
+    canvas.getActiveObjects().map((obj) => {
+        targetObjs.push({
+            id: obj.id,
+            scaleX: obj.scaleX,
+            scaleY: obj.scaleY,
+        });
+    });
+    if (socket) socket.emit("scaled", targetObjs);
 };
-export let initialBound = null;
-export const selectedCanvas = (e, canvas, socket) => {
-    const selectedObjects = canvas.getActiveObjects();
-    if (selectedObjects.length > 0) {
-        initialBound = getBounding(selectedObjects);
-    }
-};
+export const selectedCanvas = (e, canvas, socket) => {};
 export const clearSelection = (canvas, socket, objs) => {
     socket.emit("clearSelection", objs);
+    console.log(objs," emmited");
+    
 };
 
 export const getObjByID = (canvas, id) => {
@@ -53,12 +61,6 @@ export const getSelectedObjects = (canvas) => {
     let objs = canvas.getActiveObjects();
     return objs;
 };
-export const mouseMove = (canvas) => {
-    initialBound = getBounding(canvas.getActiveObjects());
-};
-export const mouseUp = () => {
-    initialBound = null;
-};
 
 export const addId = (shape) => {
     shape.toObject = (function (toObject) {
@@ -68,11 +70,4 @@ export const addId = (shape) => {
             return obj;
         };
     })(shape.toObject);
-};
-
-export const getBounding = (objects) => {
-    if (objects.length === 0) return { top: 0, left: 0 };
-    let top = Math.min(...objects.map((obj) => obj.top));
-    let left = Math.min(...objects.map((obj) => obj.left));
-    return { top, left };
 };

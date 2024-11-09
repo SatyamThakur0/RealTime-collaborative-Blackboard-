@@ -65,8 +65,6 @@ export default function AdvancedWhiteboard() {
     let socket = useSocket();
     const [activeShape, setActiveShape] = useState("cursor");
     const [color, setColor] = useState("#fff");
-    // const [active, setActive] = useState("cursor");
-    const [zoomLevel, setZoomLevel] = useState(1);
     const windowSize = useWindowSize();
     const activeShapeArr = [
         {
@@ -102,8 +100,6 @@ export default function AdvancedWhiteboard() {
     // FABRIC EVENTS
     useEffect(() => {
         if (canvas) {
-            // canvas.width = window.innerWidth;
-            // canvas.height = window.innerHeight;
             canvas.selection = true;
 
             canvas.on("object:added", (e) => sendCanvasData(e, canvas, socket));
@@ -125,6 +121,7 @@ export default function AdvancedWhiteboard() {
             canvas.on("selection:created", (e) =>
                 selectedCanvas(e, canvas, socket)
             );
+
             canvas.on("path:created", (event) => {
                 const path = event.path;
                 path.id = uid.rnd();
@@ -133,48 +130,21 @@ export default function AdvancedWhiteboard() {
                 socket.emit("freePath", path);
             });
 
-            let isDrawing = false;
-            canvas.on("mouse:down", () => {
-                isDrawing = true;
-            });
-            canvas.on("mouse:move", (event) => {
-                if (isDrawing) {
-                    console.log("mouse Moving");
-
-                    const pointer = event.pointer;
-                    mouseMove(canvas);
-                }
-            });
-            canvas.on("mouse:up", () => {
-                if (isDrawing) {
-                    isDrawing = false;
-                    mouseUp();
-                    socket.emit("drawEnd"); // Optional event to signal the end of drawing
-                }
-            });
-
             return () => {
                 canvas.dispose();
             };
         }
     }, [canvas]);
 
-    // Change color of brush and existing objects
+    // CHANGE COLOR OF BRUSH
     useEffect(() => {
         if (canvas && activeShape === "pencil") {
             canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
             canvas.freeDrawingBrush.color = color;
-            canvas.getActiveObjects().forEach((obj) => {
-                if (obj.type !== "path") {
-                    obj.set("fill", color);
-                }
-                obj.set("stroke", color);
-                canvas.renderAll();
-            });
         }
     }, [color, activeShape, canvas]);
 
-    // Change drawing mode (Brush or Shape)
+    // CHANGE DRAWING MODE
     useEffect(() => {
         if (canvas) {
             canvas.isDrawingMode = activeShape === "pencil";
@@ -184,23 +154,7 @@ export default function AdvancedWhiteboard() {
     // SHAPE FROM SOCKET
     SocketEventHandler({ canvas, socket, color });
 
-    // useEffect(() => {
-    //     const preventSwipe = (e) => {
-    //       if (e.touches.length === 2) {
-    //         e.preventDefault(); // Prevents two-finger swipe actions
-    //       }
-    //     };
-
-    //     // Add event listener
-    //     window.addEventListener('touchstart', preventSwipe, { passive: false });
-
-    //     // Cleanup event listener on unmount
-    //     return () => {
-    //       window.removeEventListener('touchstart', preventSwipe);
-    //     };
-    //   }, []);
-
-    // Add a shape to the canvas
+    // ADD SHAPE TO CANVAS
     const addShape = (shapeType) => {
         if (!canvas) return;
         const id = uid.rnd();
@@ -233,11 +187,14 @@ export default function AdvancedWhiteboard() {
         }
     };
 
-    // Clear the canvas and broadcast the clear action
+    // CLEAR CANVAS
     const clearCanvas = () => {
         if (canvas) {
-            let objs = getSelectedObjects(canvas);
-            objs.forEach((element) => canvas.remove(element));
+            let objs = [];
+            canvas.getActiveObjects().forEach((element) => {
+                objs.push(element.id);
+                canvas.remove(element);
+            });
             canvas.discardActiveObject();
             canvas.renderAll();
             socket && clearSelection(canvas, socket, objs);
@@ -245,7 +202,6 @@ export default function AdvancedWhiteboard() {
     };
 
     const handleShapeClick = (shape) => {
-        // setActive(shape);
         setActiveShape(shape);
     };
 

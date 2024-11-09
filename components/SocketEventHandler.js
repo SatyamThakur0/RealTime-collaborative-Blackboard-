@@ -18,12 +18,7 @@ function SocketEventHandler({ socket, canvas, color }) {
                 console.log(path);
             });
             socket.on("clearedShapes", (shapes) => {
-                let objs = shapes;
-                let arr = [];
-                objs.forEach((element) => {
-                    arr.push(element.id);
-                });
-                arr.forEach((element) => {
+                shapes.forEach((element) => {
                     canvas.remove(getObjByID(canvas, element));
                 });
                 canvas.discardActiveObject();
@@ -48,27 +43,20 @@ function SocketEventHandler({ socket, canvas, color }) {
                 canvas.renderAll();
             });
 
-            socket.on("scaledShape", (obj) => {
-                let scaledShape = getObjByID(canvas, obj.id);
-                if (scaledShape) {
-                    scaledShape?.set({
-                        scaleX: obj.scaleX,
-                        scaleY: obj.scaleY,
-                    });
-                    scaledShape?.setCoords();
-                }
+            socket.on("scaledShape", (objs) => {
+                objs.forEach((el) => {
+                    let obj = getObjByID(canvas, el.id);
+                    obj?.set({ scaleX: el.scaleX, scaleY: el.scaleY });
+                    obj?.setCoords();
+                });
                 canvas.renderAll();
             });
-            socket.on("rotatedShape", (obj) => {
-                let rotatedShape = getObjByID(canvas, obj.id);
-                if (rotatedShape) {
-                    rotatedShape?.set({
-                        angle: obj.angle,
-                        top: obj.top,
-                        left: obj.left,
-                    });
-                    rotatedShape?.setCoords();
-                }
+            socket.on("rotatedShape", (objs) => {
+                objs.forEach((el) => {
+                    let obj = getObjByID(canvas, el.id);
+                    obj?.set({ angle: el.angle, top: el.top, left: el.left });
+                    obj?.setCoords();
+                });
                 canvas.renderAll();
             });
 
