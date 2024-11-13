@@ -1,3 +1,4 @@
+"use client"
 import { useEffect } from "react";
 import * as fabric from "fabric";
 import { getObjByID } from "./FabricEventHandler";

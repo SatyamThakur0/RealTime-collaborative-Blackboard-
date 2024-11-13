@@ -1,3 +1,4 @@
+"use client"
 import * as fabric from "fabric";
 export const createRect = (id, color) => {
     let shape = new fabric.Rect({

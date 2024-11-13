@@ -1,3 +1,4 @@
+"use client"
 export const sendCanvasData = (e, canvas, socket) => {
     if (canvas && socket) {
         const canvasData = canvas.toJSON();
